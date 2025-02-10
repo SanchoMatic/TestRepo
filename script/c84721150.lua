@@ -21,6 +21,7 @@ function s.initial_effect(c)
     e2:SetCode(EVENT_FREE_CHAIN)
     e2:SetRange(LOCATION_MZONE)
     e2:SetCountLimit(1,{id,1})
+    e2:SetHintTiming(0,TIMINGS_CHECK_MONSTER+TIMING_MAIN_END)
     e2:SetTarget(s.syntg)
     e2:SetOperation(s.synop)
     c:RegisterEffect(e2)
@@ -50,18 +51,18 @@ function s.syntg(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 
 function s.synfilter(c,e,tp)
-    return c:IsSetCard(0x2226) and c:IsType(TYPE_SYNCHRO)
+    return c:IsSetCard(0x2226) and c:IsType(TYPE_SYNCHRO) and Duel.IsExistingMatchingCard(Card.IsSynchroSummonable,tp,LOCATION_EXTRA,0,1,nil,nil,c)
 end
 
 function s.synop(e,tp,eg,ep,ev,re,r,rp)
     local tg=Duel.SelectMatchingCard(tp,s.synfilter,tp,LOCATION_EXTRA,0,1,1,nil,e,tp)
     if #tg>0 then
         local sc=tg:GetFirst()
-        Duel.SynchroSummon(tp,sc,nil)
-        local mg=Group.CreateGroup()
-        if sc:IsType(TYPE_SYNCHRO) then
-            mg=Duel.SelectMatchingCard(tp,Card.IsAbleToGrave,tp,LOCATION_HAND+LOCATION_MZONE,0,1,sc:GetLevel()-1,nil)
+        Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+        local mg=Duel.SelectMatchingCard(tp,Card.IsAbleToGrave,tp,LOCATION_HAND+LOCATION_MZONE,0,1,sc:GetLevel()-1,nil)
+        if #mg>0 then
             Duel.SendtoGrave(mg,REASON_EFFECT+REASON_MATERIAL+REASON_SYNCHRO)
+            Duel.SynchroSummon(tp,sc,nil)
         end
     end
 end
