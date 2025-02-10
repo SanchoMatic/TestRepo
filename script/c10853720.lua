@@ -67,7 +67,7 @@ function s.spop1(e, tp, eg, ep, ev, re, r, rp)
                 Duel.SpecialSummonStep(tc, 0, tp, tp, false, false, POS_FACEUP)
             end
             Duel.SpecialSummonComplete()
-            -- Restrict Special Summons for the rest of the turn
+            -- Restrict Special Summons from Extra Deck for the rest of the turn to Synchro Monsters
             local e1 = Effect.CreateEffect(e:GetHandler())
             e1:SetType(EFFECT_TYPE_FIELD)
             e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET + EFFECT_FLAG_OATH)
@@ -81,7 +81,7 @@ function s.spop1(e, tp, eg, ep, ev, re, r, rp)
 end
 
 function s.splimit(e, c, sump, sumtype, sumpos, targetp, se)
-    return not c:IsType(TYPE_SYNCHRO)
+    return c:IsLocation(LOCATION_EXTRA) and not c:IsType(TYPE_SYNCHRO)
 end
 
 function s.spcost2(e, tp, eg, ep, ev, re, r, rp, chk)

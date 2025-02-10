@@ -1,5 +1,5 @@
--- Dark Sage Soul
-local s, id = GetID(100000073) -- Dark Sage Soul with the card ID
+-- ダークセージソウル Dark Sage Soul
+local s, id = GetID()
 
 function s.initial_effect(c)
   -- Banish when leaving the field
@@ -15,11 +15,11 @@ function s.initial_effect(c)
   local e2 = Effect.CreateEffect(c)
   e2:SetDescription(aux.Stringid(id, 0))
   e2:SetCategory(CATEGORY_LVCHANGE + CATEGORY_SPECIAL_SUMMON)
-  e2:SetType(EFFECT_TYPE_QUICK_O)
-  e2:SetCode(EVENT_FREE_CHAIN)
+  e2:SetType(EFFECT_TYPE_IGNITION)
   e2:SetRange(LOCATION_HAND + LOCATION_GRAVE)
   e2:SetCountLimit(1, id)
   e2:SetCondition(s.lvcon)
+  e2:SetCost(s.lvcost)
   e2:SetTarget(s.lvtg)
   e2:SetOperation(s.lvop)
   c:RegisterEffect(e2)
@@ -30,26 +30,31 @@ function s.rmcon(e)
 end
 
 function s.lvcon(e, tp, eg, ep, ev, re, r, rp)
-  return Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsRace, RACE_SPELLCASTER), tp, LOCATION_MZONE, 0, 1, nil) and Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsAttribute, ATTRIBUTE_DARK), tp, LOCATION_MZONE, 0, 1, nil)
+  return Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsRace, RACE_SPELLCASTER), tp, LOCATION_MZONE, 0, 1, nil) and Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsAttribute, ATTRIBUTE_DARK), tp, LOCATION_MZONE, 0, 1, nil) and Duel.GetTurnPlayer() == tp
 end
 
 function s.lvfilter(c)
   return c:IsFaceup() and c:IsType(TYPE_MONSTER) and not c:IsType(TYPE_LINK) and not c:IsType(TYPE_XYZ) and c:IsLevelAbove(1) and c:GetLevel() ~= 7
 end
 
-function s.lvtg(e, tp, eg, ep, ev, re, r, rp, chk, chkc)
-  if chkc then return chkc:IsLocation(LOCATION_MZONE) and s.lvfilter(chkc) end
+function s.lvcost(e, tp, eg, ep, ev, re, r, rp, chk)
   if chk == 0 then
-    return Duel.IsExistingTarget(s.lvfilter, tp, LOCATION_MZONE, 0, 1, nil) and Duel.GetLocationCount(tp, LOCATION_MZONE) > 0 and e:GetHandler():IsCanBeSpecialSummoned(e, 0, tp, false, false)
+    return Duel.IsExistingTarget(s.lvfilter, tp, LOCATION_MZONE, 0, 1, nil)
   end
   Duel.Hint(HINT_SELECTMSG, tp, HINTMSG_TARGET)
   local g = Duel.SelectTarget(tp, s.lvfilter, tp, LOCATION_MZONE, 0, 1, 1, nil)
-  Duel.SetOperationInfo(0, CATEGORY_LVCHANGE, g, 1, 0, 0)
+  e:SetLabelObject(g:GetFirst())
+end
+
+function s.lvtg(e, tp, eg, ep, ev, re, r, rp, chk)
+  if chk == 0 then
+    return Duel.GetLocationCount(tp, LOCATION_MZONE) > 0 and e:GetHandler():IsCanBeSpecialSummoned(e, 0, tp, false, false)
+  end
   Duel.SetOperationInfo(0, CATEGORY_SPECIAL_SUMMON, e:GetHandler(), 1, 0, 0)
 end
 
 function s.lvop(e, tp, eg, ep, ev, re, r, rp)
-  local tc = Duel.GetFirstTarget()
+  local tc = e:GetLabelObject()
   if tc and tc:IsFaceup() and tc:IsRelateToEffect(e) and tc:GetLevel() ~= 7 then
     local e1 = Effect.CreateEffect(e:GetHandler())
     e1:SetType(EFFECT_TYPE_SINGLE)

@@ -13,24 +13,25 @@ function s.initial_effect(c)
     e1:SetOperation(s.activate)
     c:RegisterEffect(e1)
 
-	--extra summon
-	local e1=Effect.CreateEffect(c)
-	e1:SetDescription(aux.Stringid(id,0))
-	e1:SetType(EFFECT_TYPE_FIELD)
-	e1:SetTargetRange(LOCATION_HAND+LOCATION_MZONE,0)
-	e1:SetCode(EFFECT_EXTRA_SUMMON_COUNT)
-	e1:SetRange(LOCATION_MZONE)
-	e1:SetTarget(aux.TargetBoolFunction(Card.IsSetCard,0x2226))
-	c:RegisterEffect(e1)
+    -- Extra summon
+    local e2 = Effect.CreateEffect(c)
+    e2:SetDescription(aux.Stringid(id, 1))
+    e2:SetType(EFFECT_TYPE_FIELD)
+    e2:SetTargetRange(LOCATION_HAND + LOCATION_MZONE, 0)
+    e2:SetCode(EFFECT_EXTRA_SUMMON_COUNT)
+    e2:SetRange(LOCATION_SZONE)
+    e2:SetTarget(aux.TargetBoolFunction(Card.IsSetCard, 0x2226))
+    c:RegisterEffect(e2)
 
     -- Inflict damage when Special Summoning a "Blacklord" Synchro Monster
     local e3 = Effect.CreateEffect(c)
     e3:SetDescription(aux.Stringid(id, 2))
     e3:SetCategory(CATEGORY_DAMAGE)
-    e3:SetType(EFFECT_TYPE_CONTINUOUS + EFFECT_TYPE_FIELD)
+    e3:SetType(EFFECT_TYPE_FIELD + EFFECT_TYPE_TRIGGER_F)
     e3:SetCode(EVENT_SPSUMMON_SUCCESS)
-    e3:SetRange(LOCATION_FZONE)
+    e3:SetRange(LOCATION_SZONE)
     e3:SetCondition(s.damcon)
+    e3:SetTarget(s.damtarget)
     e3:SetOperation(s.damop)
     c:RegisterEffect(e3)
 
@@ -63,10 +64,6 @@ function s.activate(e, tp, eg, ep, ev, re, r, rp)
     end
 end
 
-function s.extg(e, c)
-    return c:IsSetCard(0x2226)
-end
-
 function s.damfilter(c, tp)
     return c:IsSetCard(0x2226) and c:IsType(TYPE_SYNCHRO) and c:IsControler(tp)
 end
@@ -75,12 +72,22 @@ function s.damcon(e, tp, eg, ep, ev, re, r, rp)
     return eg:IsExists(s.damfilter, 1, nil, tp)
 end
 
+function s.damtarget(e, tp, eg, ep, ev, re, r, rp, chk)
+    if chk == 0 then return true end
+    Duel.SetTargetPlayer(1 - tp)
+    Duel.SetTargetParam(100)
+    Duel.SetOperationInfo(0, CATEGORY_DAMAGE, nil, 0, 1 - tp, 100)
+end
+
 function s.damop(e, tp, eg, ep, ev, re, r, rp)
-    Duel.Damage(1-tp, 100, REASON_EFFECT)
+    if e:GetHandler():IsRelateToEffect(e) then
+        local p, d = Duel.GetChainInfo(0, CHAININFO_TARGET_PLAYER, CHAININFO_TARGET_PARAM)
+        Duel.Damage(p, d, REASON_EFFECT)
+    end
 end
 
 function s.thcon(e, tp, eg, ep, ev, re, r, rp)
-    return Duel.GetLP(tp) > Duel.GetLP(1-tp) and e:GetHandler():IsPreviousPosition(POS_FACEUP)
+    return Duel.GetLP(tp) > Duel.GetLP(1 - tp) and e:GetHandler():IsPreviousPosition(POS_FACEUP)
 end
 
 function s.tdfilter(c)
@@ -97,6 +104,6 @@ function s.thop(e, tp, eg, ep, ev, re, r, rp)
     local g = Duel.SelectMatchingCard(tp, s.tdfilter, tp, LOCATION_REMOVED, 0, 1, 1, nil)
     if #g > 0 then
         Duel.SendtoHand(g, nil, REASON_EFFECT)
-        Duel.ConfirmCards(1-tp, g)
+        Duel.ConfirmCards(1 - tp, g)
     end
 end
