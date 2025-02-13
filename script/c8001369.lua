@@ -8,18 +8,36 @@ function s.initial_effect(c)
     e1:SetCondition(s.handcon)
     c:RegisterEffect(e1)
 
+    -- Continuous Effect to Track Opponent's Monster Effects
+    aux.GlobalCheck(s,function()
+        local ge1=Effect.CreateEffect(c)
+        ge1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+        ge1:SetCode(EVENT_CHAIN_SOLVED)
+        ge1:SetOperation(s.checkop)
+        Duel.RegisterEffect(ge1,0)
+    end)
+
+    -- Reset Flag at Start of Turn without interaction
+    aux.GlobalCheck(s,function()
+        local ge2=Effect.CreateEffect(c)
+        ge2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+        ge2:SetCode(EVENT_TURN_END)
+        ge2:SetOperation(s.resetop)
+        Duel.RegisterEffect(ge2,0)
+    end)
+
     -- Destroy
-    local e2=Effect.CreateEffect(c)
-    e2:SetCategory(CATEGORY_DESTROY)
-    e2:SetType(EFFECT_TYPE_ACTIVATE)
-    e2:SetCode(EVENT_SPSUMMON_SUCCESS)
-    e2:SetRange(LOCATION_HAND+LOCATION_SZONE)
-    e2:SetCountLimit(1,id)
-    e2:SetCondition(s.condition)
-    e2:SetCost(s.cost)
-    e2:SetTarget(s.target)
-    e2:SetOperation(s.operation)
-    c:RegisterEffect(e2)
+    local e3=Effect.CreateEffect(c)
+    e3:SetCategory(CATEGORY_DESTROY)
+    e3:SetType(EFFECT_TYPE_ACTIVATE)
+    e3:SetCode(EVENT_FREE_CHAIN)
+    e3:SetRange(LOCATION_HAND+LOCATION_SZONE)
+    e3:SetCountLimit(1,id)
+    e3:SetCondition(s.condition)
+    e3:SetCost(s.cost)
+    e3:SetTarget(s.target)
+    e3:SetOperation(s.operation)
+    c:RegisterEffect(e3)
 end
 
 function s.handcon(e)
@@ -27,15 +45,32 @@ function s.handcon(e)
     return Duel.GetFieldGroupCount(tp,LOCATION_MZONE,0)<Duel.GetFieldGroupCount(tp,0,LOCATION_MZONE)
 end
 
+function s.checkop(e,tp,eg,ep,ev,re,r,rp)
+    if ep~=tp and re:IsActiveType(TYPE_MONSTER) then
+        if Duel.GetFlagEffect(ep,id)<5 then
+            Duel.RegisterFlagEffect(ep,id,RESET_PHASE+PHASE_END,0,1)
+        end
+    end
+end
+
+function s.resetop(e,tp,eg,ep,ev,re,r,rp)
+    Duel.ResetFlagEffect(tp,id)
+    Duel.ResetFlagEffect(1-tp,id)
+end
+
 function s.condition(e,tp,eg,ep,ev,re,r,rp)
-    return ep~=tp and Duel.GetMatchingGroupCount(aux.FilterBoolFunction(Card.IsType,TYPE_MONSTER),tp,LOCATION_GRAVE,LOCATION_GRAVE,nil)>=5
+    return Duel.GetFlagEffect(1-tp,id)>=5 or (e:GetHandler():IsLocation(LOCATION_HAND) and s.handcon(e))
 end
 
 function s.cost(e,tp,eg,ep,ev,re,r,rp,chk)
     local count=Duel.GetMatchingGroupCount(Card.IsControler,tp,0,LOCATION_MZONE,nil,1-tp)
     if chk==0 then return count>0 and Duel.IsPlayerCanDiscardDeck(tp,1) end
     Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
-    local ct=Duel.AnnounceNumber(tp,1,math.min(count,3))
+    local options = {}
+    for i=1, math.min(count,3) do
+        table.insert(options, i)
+    end
+    local ct=Duel.AnnounceNumber(tp,table.unpack(options))
     Duel.DiscardDeck(tp,ct,REASON_COST)
     e:SetLabel(ct)
 end
