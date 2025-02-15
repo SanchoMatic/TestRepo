@@ -1,5 +1,5 @@
--- Legendary Dark Magician
-local s,id=GetID(7000000)
+-- Legendary Dark Magician (レジェンダリー・ダーク・マジシャン)
+local s,id=GetID()
 function s.initial_effect(c)
     -- Xyz Summon
     Xyz.AddProcedure(c,aux.FilterBoolFunctionEx(Card.IsAttribute,ATTRIBUTE_DARK),8,3,s.ovfilter,aux.Stringid(id,0))
@@ -93,14 +93,14 @@ function s.disop(e,tp,eg,ep,ev,re,r,rp)
         local e1=Effect.CreateEffect(e:GetHandler())
         e1:SetType(EFFECT_TYPE_SINGLE)
         e1:SetCode(EFFECT_DISABLE)
-        e1:SetReset(RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_END)
+        e1:SetReset(RESET_EVENT+RESETS_STANDARD)
         tc:RegisterEffect(e1)
         -- If it's a monster, also negate its effects
         if tc:IsType(TYPE_MONSTER) then
             local e2=Effect.CreateEffect(e:GetHandler())
             e2:SetType(EFFECT_TYPE_SINGLE)
             e2:SetCode(EFFECT_DISABLE_EFFECT)
-            e2:SetReset(RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_END)
+            e2:SetReset(RESET_EVENT+RESETS_STANDARD)
             tc:RegisterEffect(e2)
         end
         -- Optional: Banish 1 card on opponent's field
