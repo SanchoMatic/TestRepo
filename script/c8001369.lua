@@ -40,17 +40,17 @@ function s.initial_effect(c)
     c:RegisterEffect(e3)
 end
 
-function s.handcon(e)
-    local tp=e:GetHandlerPlayer()
-    return Duel.GetFieldGroupCount(tp,LOCATION_MZONE,0)<Duel.GetFieldGroupCount(tp,0,LOCATION_MZONE)
-end
-
 function s.checkop(e,tp,eg,ep,ev,re,r,rp)
     if ep~=tp and re:IsActiveType(TYPE_MONSTER) then
         if Duel.GetFlagEffect(ep,id)<5 then
             Duel.RegisterFlagEffect(ep,id,RESET_PHASE+PHASE_END,0,1)
         end
     end
+end
+
+function s.handcon(e)
+    local tp=e:GetHandlerPlayer()
+    return Duel.GetFieldGroupCount(tp,LOCATION_MZONE,0)<Duel.GetFieldGroupCount(tp,0,LOCATION_MZONE)
 end
 
 function s.resetop(e,tp,eg,ep,ev,re,r,rp)
